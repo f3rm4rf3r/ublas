@@ -15,6 +15,7 @@
 #include <ostream>
 #include <complex>
 #include <boost/numeric/ublas/tensor/detail/extents_functions.hpp>
+#include <boost/numeric/ublas/tensor/slice_detail/type_traits_slice.hpp>
 
 namespace boost {
 namespace numeric {
@@ -128,5 +129,17 @@ template <class T,
 std::ostream& operator<<(std::ostream& os, T const& e){
     return os<<boost::numeric::ublas::to_string(e);
 }
+
+template <class T,
+    std::enable_if_t<
+    boost::numeric::ublas::span::is_slice_v<T>
+    , int> = 0
+>
+std::ostream& operator<<(std::ostream& os, T const& s){
+    return os << "Slice( Start: "<< s.start()<<", End: "<< s.end()
+        << ", Stride: "<< s.stride()<<", Size: " << s.size() << " )";
+}
+
+
 
 #endif
