@@ -95,17 +95,39 @@ namespace boost::numeric::ublas{
     template<typename ExtentsType, typename LayoutType, typename StorageType>
     struct tensor_engine<ExtentsType, LayoutType, StorageType>{
         using extents_type 	        = ExtentsType;
+        
+        static_assert(is_extents_v<extents_type>,
+            "boost::numeric::ublas::tensor_engine : please provide valid tensor extents type"
+        );
+
         using layout_type 	        = typename layout::extract_strides_t<extents_type,LayoutType>::layout_type;
         using strides_type 	        = typename layout::extract_strides_t<extents_type,LayoutType>::strides_type;
+
+        static_assert(is_strides_v<strides_type>,
+            "boost::numeric::ublas::tensor_engine : please provide valid tensor layout type"
+        );
+
         using storage_traits        = storage_traits<StorageType>;
+        
     };
     
     template<typename LayoutType, typename StorageType>
     struct tensor_engine<LayoutType, StorageType>{
         using extents_type 	        = typename layout::extract_strides_t<void,LayoutType>::extents_type;
+        
+        static_assert(is_extents_v<extents_type>,
+            "boost::numeric::ublas::tensor_engine : please provide valid tensor extents type"
+        );
+
         using layout_type 	        = typename layout::extract_strides_t<void,LayoutType>::layout_type;
         using strides_type 	        = typename layout::extract_strides_t<void,LayoutType>::strides_type;
+
+        static_assert(is_strides_v<strides_type>,
+            "boost::numeric::ublas::tensor_engine : please provide valid tensor layout type"
+        );
+
         using storage_traits        = storage_traits<StorageType>;
+        
     };
 
     template<typename ValueType, typename Layout = first_order>
@@ -125,6 +147,10 @@ namespace boost::numeric::ublas{
         
         template<typename E, typename L>
         struct select_static_strides{
+            static_assert(is_static_v<E>,
+                "boost::numeric::ublas::tensor_engine : please provide valid static tensor extents type"
+            );
+
             static_assert( always_false_v<E>, "boost::numeric::ublas::detail::select_static_strides" 
                 "Extents should be static tensor extents"
             );
