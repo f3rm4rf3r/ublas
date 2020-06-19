@@ -113,7 +113,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE( test_tensor_prod_tensor_1, value,  test_types,
             
             auto phi_array = ublas::detail::seq_to_array_v<phi>;
 
-            auto c = ublas::prod<q>(a, b, phi{});
+            auto c = ublas::prod(a, b, phi{});
 
             auto acc = value_type(1);
             for(auto i = 0ul; i < q; ++i)
@@ -142,7 +142,6 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE( test_tensor_prod_tensor_2, value,  test_types,
     using namespace boost::numeric;
     using value_type   = typename value::first_type;
     using layout_type  = typename value::second_type;
-    using tensor_type  = ublas::dynamic_tensor<value_type,layout_type>;
 
     // left-hand and right-hand side have the
     // the same number of elements
@@ -154,33 +153,49 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE( test_tensor_prod_tensor_2, value,  test_types,
         constexpr auto const pa = extents_type::_size;
 
         using mp_phi = boost::mp11::mp_pop_front< boost::mp11::mp_iota_c< pa + 1> >;
-        using pi = mp_list_to_int_seq_t< mp_phi >;
+
         constexpr auto const fac = static_factorial_v<pa>;
 
         ublas::detail::static_for<0,fac>([&](auto, auto perm){
             
-            using new_pi = std::decay_t< decltype(perm) >;
+            using permutated_pi = std::decay_t< decltype(perm) >;
 
             auto inverse_lm = [&](auto iter, auto na){
                 using iter_type = decltype(iter);
                 constexpr auto const J = iter_type::value;
 
                 using nb_type = decltype(na);
-                using pi_at = boost::mp11::mp_at<new_pi,iter_type>;
+                using pi_at = boost::mp11::mp_at<permutated_pi,iter_type>;
                 using replace_val = std::integral_constant< typename extents_type::value_type, extents_type::at(J) >;
                 using res_type = boost::mp11::mp_replace_at_c<nb_type, pi_at::value - 1, replace_val >;
                 return res_type{};
             };
 
-            auto nb = ublas::detail::type_static_for<0,pa>(std::move(inverse_lm), boost::mp11::mp_from_sequence< ublas::detail::static_extents_to_seq_t<extents_type> >{});
-            auto b  = tensor_type( nb, value_type{3} );
+            auto mp_nb = ublas::detail::type_static_for<0,pa>(
+                    std::move(inverse_lm), 
+                    ublas::detail::static_extents_to_seq_t<extents_type>{}
+                );
+            using nb_type = ublas::detail::seq_to_static_extents_t< decltype(mp_nb) >;
+            
+            using tensorb_type = ublas::static_tensor<value_type,nb_type,layout_type>;
+
+            auto b  = tensorb_type( nb_type{}, value_type{3} );
 
             // the number of contractions is changed.
             boost::mp11::mp_for_each< boost::mp11::mp_iota_c<pa + 1> >([&](auto iter){
                 constexpr auto const q = decltype(iter)::value;
 
-                using phia = boost::mp11::mp_pop_front< boost::mp11::mp_iota_c< q + 1 > >;
-                using phib = boost::mp11::mp_transform_q< test_tensor_prod_tensor_2_transform_fn<new_pi>, phia >;
+                using mp_phia = boost::mp11::mp_pop_front< boost::mp11::mp_iota_c< q + 1 > >;
+
+                auto mp_res_phib = ublas::detail::type_static_for<0,q>([&](auto iter, auto prev){
+                    constexpr auto const i = decltype(iter)::value;
+                    using pi_at = boost::mp11::mp_at_c<permutated_pi,i>;
+                    return boost::mp11::mp_push_back<decltype(prev),pi_at>{};
+                },boost::mp11::mp_list<>{});
+
+                using mp_phib = decltype(mp_res_phib);
+                using phia = mp_list_to_int_seq_t<mp_phia>;
+                using phib = mp_list_to_int_seq_t<mp_phib>;
 
                 auto c = ublas::prod(a, b, phia{}, phib{});
                 auto phia_arr = ublas::detail::seq_to_array_v<phia>;
@@ -192,8 +207,8 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE( test_tensor_prod_tensor_2, value,  test_types,
                     BOOST_CHECK_EQUAL( c[i] , acc * a[0] * b[0] );
 
             });
-            return static_next_permutation< new_pi >();
-        },pi{});
+            return static_next_permutation< permutated_pi >();
+        },mp_phi{});
 
     });
 }

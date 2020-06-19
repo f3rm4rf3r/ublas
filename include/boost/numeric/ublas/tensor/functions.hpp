@@ -294,7 +294,12 @@ namespace boost::numeric::ublas
      * input tensor b can be of type std::vector<std::size_t> or std::array<std::size_t,N>
      * @result     tensor with order r+s
     */
-    template <typename TensorEngine1, typename TensorEngine2, typename PermuType>
+    template <typename TensorEngine1, typename TensorEngine2, typename PermuType,
+        std::enable_if_t<
+            !(  is_static<typename tensor_core< TensorEngine1 >::extents_type>::value &&
+                is_static<typename tensor_core< TensorEngine2 >::extents_type>::value )
+        ,int> = 0
+    >
     inline decltype(auto) prod(tensor_core< TensorEngine1 > const &a, tensor_core< TensorEngine2 > const &b,
                                 PermuType const &phia, PermuType const &phib)
     {
@@ -1053,7 +1058,7 @@ namespace boost::numeric::ublas
      *
      * na[phia[x]] = nb[phib[x]] for 1 <= x <= q
      *
-     * @tparam    Q contraction dimension with 1 <= Q <= p
+     * @tparam    q contraction dimension with 1 <= q <= p
      * @param[in]  a  left-hand side tensor with order r+q
      * @param[in]  b  right-hand side tensor with order s+q
      * @param[in]  phia one-based permutation tuple of length q for the first
@@ -1062,7 +1067,12 @@ namespace boost::numeric::ublas
      * input tensor b of type std::integer_sequence<std::size_t,...>
      * @result     tensor with order r+s
     */
-    template <std::size_t Q, typename TensorEngine1, typename TensorEngine2, std::size_t... Ss1, std::size_t... Ss2>
+    template <typename TensorEngine1, typename TensorEngine2, std::size_t... Ss1, std::size_t... Ss2,
+        std::enable_if_t<
+            is_static< typename tensor_core< TensorEngine1 >::extents_type >::value &&
+            is_static< typename tensor_core< TensorEngine2 >::extents_type >::value
+        ,int> = 0
+    >
     inline decltype(auto) prod(tensor_core< TensorEngine1 > const &a, tensor_core< TensorEngine2 > const &b,
                                 std::integer_sequence<std::size_t, Ss1...>, std::integer_sequence<std::size_t, Ss2...>)
     {
@@ -1084,6 +1094,7 @@ namespace boost::numeric::ublas
             "Both tensor should have static extents"
         );
 
+        constexpr auto const q = sizeof...(Ss1);
         constexpr auto const pa = extents_type_1::_size;
         constexpr auto const pb = extents_type_2::_size;
         constexpr auto const sz_phia = sizeof...(Ss1);
@@ -1101,17 +1112,17 @@ namespace boost::numeric::ublas
         );
         
         static_assert(
-            pa >= Q,
+            pa >= q,
             "error in ublas::prod: number of contraction dimensions cannot be greater than the order of the left-hand side tensor."
         );
         
         static_assert(
-            pb >= Q,
+            pb >= q,
             "error in ublas::prod: number of contraction dimensions cannot be greater than the order of the right-hand side tensor."
         );
         
         static_assert(
-            Q == sz_phia,
+            q == sz_phib,
             "error in ublas::prod: permutation tuples must have the same length."
         );
 
@@ -1125,7 +1136,7 @@ namespace boost::numeric::ublas
             "error in ublas::prod: permutation tuple for the right-hand side tensor cannot be greater than the corresponding order."
         );
 
-        boost::mp11::mp_for_each<boost::mp11::mp_iota_c<Q>>([&](auto iter){
+        boost::mp11::mp_for_each<boost::mp11::mp_iota_c<q>>([&](auto iter){
             
             using iter_type = decltype(iter);
             
@@ -1143,8 +1154,8 @@ namespace boost::numeric::ublas
             );
         });
 
-        constexpr auto const r = pa - Q;
-        constexpr auto const s = pb - Q;
+        constexpr auto const r = pa - q;
+        constexpr auto const s = pb - q;
 
         using one_type = boost::mp11::mp_list_c<std::size_t, 1>;
         using phia1_type = boost::mp11::mp_pop_front< boost::mp11::mp_iota_c<pa + 1> >;
@@ -1238,35 +1249,13 @@ namespace boost::numeric::ublas
         auto new_phia = detail::seq_to_static_extents_t< transformed_phia >{};
         auto new_phib = detail::seq_to_static_extents_t< transformed_phib >{};
 
-        ttt(pa, pb, Q,
+        ttt(pa, pb, q,
             new_phia.data(), new_phib.data(),
             c.data(), c.extents().data(), c.strides().data(),
             a.data(), a.extents().data(), a.strides().data(),
             b.data(), b.extents().data(), b.strides().data());
 
         return c;
-    }
-
-
-    /** @brief Computes the q-mode tensor-times-tensor product
-     *
-     * Implements C[i1,...,ir,j1,...,js] = sum( A[i1,...,ir+q] * B[j1,...,js+q]  )
-     *
-     * @note calls ublas::ttt
-     *
-     * na[phi[x]] = nb[phi[x]] for 1 <= x <= q
-     *
-     * @param[in]  a  left-hand side tensor with order r+q
-     * @param[in]  b  right-hand side tensor with order s+q
-     * @param[in]  phi one-based permutation tuple of length q for bot input
-     * tensors of type std::integer_sequence<std::size_t,...>
-     * @result     tensor with order r+s
-    */
-    template <std::size_t Q, typename TensorEngine1, typename TensorEngine2, std::size_t... Ss>
-    inline decltype(auto) prod(tensor_core< TensorEngine1 > const &a, tensor_core< TensorEngine2 > const &b,
-                                std::integer_sequence<std::size_t, Ss...> phi)
-    {
-        return prod<Q>(a, b, phi, phi);
     }
 
     /** @brief Transposes a tensor according to a permutation tuple

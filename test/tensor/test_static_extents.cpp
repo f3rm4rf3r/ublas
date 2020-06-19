@@ -474,17 +474,4 @@ BOOST_FIXTURE_TEST_CASE(test_static_extents_squeeze, fixture, *boost::unit_test:
 
 }
 
-BOOST_AUTO_TEST_CASE(test_static_extents_exception)
-{
-  using namespace boost::numeric::ublas;
-  
-  basic_static_extents<size_t,3,1,2,3> e1;
-  for(auto i = e1.size(); i < 3; i++){
-    BOOST_REQUIRE_THROW( (void)e1.at(i),std::out_of_range );
-  }
-  
-  BOOST_REQUIRE_THROW((void)e1.at(std::numeric_limits<size_t>::max()),std::out_of_range);
-
-}
-
 BOOST_AUTO_TEST_SUITE_END()

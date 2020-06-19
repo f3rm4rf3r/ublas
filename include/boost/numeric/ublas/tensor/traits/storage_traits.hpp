@@ -61,8 +61,6 @@ struct storage_traits<std::array<V,N>>
 {
     using array_type      = std::array<V,N>;
 
-    static constexpr std::size_t const size_ = N;
-
     using size_type       = typename array_type::size_type;
     using difference_type = typename array_type::difference_type;
     using value_type      = typename array_type::value_type;
