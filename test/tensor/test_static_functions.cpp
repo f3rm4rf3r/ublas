@@ -127,16 +127,6 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE( test_tensor_prod_tensor_1, value,  test_types,
     });
 }
 
-template<typename PiList>
-struct test_tensor_prod_tensor_2_transform_fn{
-    using pi = PiList;
-
-    template<typename I>
-    struct fn{
-        using type = boost::mp11::mp_at_c<PiList, I::value - 1 >;
-    };
-};
-
 BOOST_FIXTURE_TEST_CASE_TEMPLATE( test_tensor_prod_tensor_2, value,  test_types, fixture )
 {
     using namespace boost::numeric;
