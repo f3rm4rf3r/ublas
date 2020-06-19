@@ -11,8 +11,8 @@
 //
 
 
-#ifndef _BOOST_NUMERIC_UBLAS_TENSOR_FIXED_RANK_EXTENTS_HPP_
-#define _BOOST_NUMERIC_UBLAS_TENSOR_FIXED_RANK_EXTENTS_HPP_
+#ifndef BOOST_NUMERIC_UBLAS_TENSOR_FIXED_RANK_EXTENTS_HPP
+#define BOOST_NUMERIC_UBLAS_TENSOR_FIXED_RANK_EXTENTS_HPP
 
 #include <initializer_list>
 #include <limits>
@@ -21,17 +21,15 @@
 #include <boost/numeric/ublas/tensor/type_traits.hpp>
 #include <boost/numeric/ublas/tensor/detail/extents_functions.hpp>
 
-namespace boost {
-namespace numeric {
-namespace ublas {
+namespace boost::numeric::ublas {
 
-/** @brief Template class for storing tensor extents for compile time.
+/** @brief Template typename for storing tensor extents for compile time.
  *
  * @code basic_static_extents<1,2,3,4> t @endcode
  * @tparam E parameter pack of extents
  *
  */
-template <class ExtentsType, std::size_t N>
+template <typename ExtentsType, std::size_t N>
 struct basic_fixed_rank_extents
 {
   
@@ -74,8 +72,21 @@ struct basic_fixed_rank_extents
         return _base[k];
     }
 
-    // default constructor
     constexpr basic_fixed_rank_extents() = default;
+    
+    constexpr basic_fixed_rank_extents(basic_fixed_rank_extents const& other)
+        : _base(other._base)
+    {}
+    
+    constexpr basic_fixed_rank_extents(basic_fixed_rank_extents && other)
+        : _base( std::move(other._base) )
+    {}
+    
+    constexpr basic_fixed_rank_extents& operator=(basic_fixed_rank_extents other) noexcept
+    {
+        swap(*this,other);
+        return *this;
+    }
     
     constexpr basic_fixed_rank_extents(std::initializer_list<value_type> li){
         if( li.size() > _size ){
@@ -106,12 +117,20 @@ struct basic_fixed_rank_extents
         _base.fill(value);
     }
     
-    template<typename OtherExtentsType,
-        std::enable_if_t< 
-            is_extents<OtherExtentsType>::value
-            ,int > = 0
+    template<typename OtherExtents,
+        typename = std::enable_if_t< is_extents_v<OtherExtents> >
     >
-    constexpr basic_fixed_rank_extents(OtherExtentsType const& e){
+    constexpr basic_fixed_rank_extents(OtherExtents const& e){
+        static_assert( is_extents_v<OtherExtents>, "boost::numeric::ublas::basic_fixed_rank_extents(OtherExtents const&) : " 
+            "OtherExtents is not a tensor extents"
+        );
+
+        if( e.size() != size() ){
+            throw std::length_error("Error in basic_fixed_rank_extents::basic_fixed_rank_extents(OtherExtents const&) : "
+                "Size mismatch"
+            );
+        }
+
         std::copy_n(e.begin(),_size, _base.begin());
     }
     
@@ -133,7 +152,7 @@ struct basic_fixed_rank_extents
 
     /** @brief Returns the std::vector containing extents */
     [[nodiscard]] inline
-    constexpr base_type const& base() const {
+    constexpr base_type const& base() const noexcept{
         return _base;
     }
 
@@ -145,26 +164,26 @@ struct basic_fixed_rank_extents
     [[nodiscard]] inline
     constexpr bool empty() const noexcept { return _size == size_type{0}; }
 
-    friend void swap(basic_fixed_rank_extents& lhs, basic_fixed_rank_extents& rhs) {
+    friend void swap(basic_fixed_rank_extents& lhs, basic_fixed_rank_extents& rhs) noexcept{
         std::swap(lhs._base   , rhs._base   );
     }
 
     [[nodiscard]] inline
-    constexpr const_pointer data() const
+    constexpr const_pointer data() const noexcept
     {
         return _base.data();
     }
 
     [[nodiscard]] inline
     constexpr const_iterator
-    begin() const
+    begin() const noexcept
     {
         return _base.begin();
     }
 
     [[nodiscard]] inline
     constexpr const_iterator
-    end() const
+    end() const noexcept
     {
         return _base.end();
     }
@@ -181,9 +200,7 @@ private:
     base_type _base{};
 };
 
-} // namespace ublas
-} // namespace numeric
-} // namespace boost
+} // boost::numeric::ublas
 
 
 

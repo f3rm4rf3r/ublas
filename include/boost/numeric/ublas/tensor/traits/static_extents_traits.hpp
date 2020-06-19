@@ -10,16 +10,16 @@
 //  Google
 //
 
-#ifndef _BOOST_NUMERIC_UBLAS_TENSOR_STATIC_TRAITS_HPP_
-#define _BOOST_NUMERIC_UBLAS_TENSOR_STATIC_TRAITS_HPP_
+#ifndef BOOST_NUMERIC_UBLAS_TENSOR_STATIC_TRAITS_HPP
+#define BOOST_NUMERIC_UBLAS_TENSOR_STATIC_TRAITS_HPP
 
 #include <type_traits>
 
 namespace boost::numeric::ublas{
   
-  template <class ExtentsType, ExtentsType... E> struct basic_static_extents;
-  template <class ExtentsType, std::size_t N> struct basic_fixed_rank_extents;
-  template<class ExtentsType> class basic_extents;
+  template <typename ExtentsType, ExtentsType... E> struct basic_static_extents;
+  template <typename ExtentsType, std::size_t N> struct basic_fixed_rank_extents;
+  template <typename ExtentsType> struct basic_extents;
 
 } // namespace boost::numeric::ublas
 

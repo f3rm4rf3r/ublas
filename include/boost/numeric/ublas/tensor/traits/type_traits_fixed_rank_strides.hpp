@@ -13,13 +13,13 @@
 #ifndef BOOST_UBLAS_TENSOR_TYPE_TRAITS_FIXED_RANK_STRIDES_HPP
 #define BOOST_UBLAS_TENSOR_TYPE_TRAITS_FIXED_RANK_STRIDES_HPP
 
-#include <boost/numeric/ublas/tensor/detail/basic_type_traits.hpp>
+#include <boost/numeric/ublas/tensor/traits/basic_type_traits.hpp>
 
 namespace boost::numeric::ublas{
     
 template <class ExtentsType, std::size_t N> struct basic_fixed_rank_extents;
 
-template<class T, std::size_t N, class L> class basic_fixed_rank_strides;
+template<class T, std::size_t N, class L> struct basic_fixed_rank_strides;
 
 } // namespace boost::numeric::ublas
 

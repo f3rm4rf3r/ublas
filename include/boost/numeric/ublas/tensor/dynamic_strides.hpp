@@ -12,22 +12,17 @@
 /// \file strides.hpp Definition for the basic_strides template class
 
 
-#ifndef _BOOST_UBLAS_TENSOR_DYNAMIC_STRIDES_HPP_
-#define _BOOST_UBLAS_TENSOR_DYNAMIC_STRIDES_HPP_
+#ifndef BOOST_UBLAS_TENSOR_DYNAMIC_STRIDES_HPP
+#define BOOST_UBLAS_TENSOR_DYNAMIC_STRIDES_HPP
 
 #include <boost/numeric/ublas/functional.hpp>
 #include <boost/numeric/ublas/tensor/dynamic_extents.hpp>
 #include <boost/numeric/ublas/tensor/type_traits.hpp>
 
-namespace boost { 
-namespace numeric { 
-namespace ublas {
+namespace boost::numeric::ublas {
 
-using first_order = column_major;
-using last_order = row_major;
-
-template<class T>
-class basic_extents;
+template<typename ExtentType>
+struct basic_extents;
 
 
 /** @brief Template class for storing tensor strides for iteration with runtime variable size.
@@ -35,29 +30,24 @@ class basic_extents;
  * Proxy template class of std::vector<int_type>.
  *
  */
-template<class __int_type, class __layout>
-class basic_strides
+template<typename SizeType, typename Layout>
+struct basic_strides
 {
-public:
+    using layout_type       = Layout;
+    using base_type         = std::vector<SizeType>;
+    using value_type        = typename base_type::value_type;
+    using reference         = typename base_type::reference;
+    using const_reference   = typename base_type::const_reference;
+    using size_type         = typename base_type::size_type;
+    using const_pointer     = typename base_type::const_pointer;
+    using const_iterator    = typename base_type::const_iterator;
 
-    using base_type = std::vector<__int_type>;
-
-    static_assert( std::numeric_limits<typename base_type::value_type>::is_integer,
+    static_assert( std::numeric_limits<value_type>::is_integer,
                                  "Static error in boost::numeric::ublas::basic_strides: type must be of type integer.");
-    static_assert(!std::numeric_limits<typename base_type::value_type>::is_signed,
+    static_assert(!std::numeric_limits<value_type>::is_signed,
                                 "Static error in boost::numeric::ublas::basic_strides: type must be of type unsigned integer.");
-    static_assert(std::is_same<__layout,first_order>::value || std::is_same<__layout,last_order>::value,
+    static_assert(std::is_same<Layout,first_order>::value || std::is_same<Layout,last_order>::value,
                                 "Static error in boost::numeric::ublas::basic_strides: layout type must either first or last order");
-
-
-    using layout_type = __layout;
-    using value_type = typename base_type::value_type;
-    using reference = typename base_type::reference;
-    using const_reference = typename base_type::const_reference;
-    using size_type = typename base_type::size_type;
-    using const_pointer = typename base_type::const_pointer;
-    using const_iterator = typename base_type::const_iterator;
-
 
     /** @brief Default constructs basic_strides
      *
@@ -73,10 +63,14 @@ public:
      * @code auto strides = basic_strides<unsigned>( basic_extents<std::size_t>{2,3,4} );
      *
      */
-    template <class T>
-    basic_strides(basic_extents<T> const& s)
+    template <typename ExtentsType>
+    basic_strides(ExtentsType const& s)
             : _base(s.size(),1)
     {
+        static_assert( is_extents_v<ExtentsType>, "boost::numeric::ublas::basic_fixed_rank_extents(ExtentsType const&) : " 
+            "ExtentsType is not a tensor extents"
+        );
+        
         if( s.empty() )
             return;
 
@@ -149,50 +143,48 @@ public:
 
     [[nodiscard]] inline
     constexpr const_reference back () const{
-        return _base[_base.size() - 1];
+        return _base.back();
     }
 
     [[nodiscard]] inline
     constexpr reference back (){
-        return _base[_base.size() - 1];
+        return _base.back();
     }
 
     [[nodiscard]] inline
-    constexpr bool empty() const{
+    constexpr bool empty() const noexcept{
         return _base.empty();
     }
 
     [[nodiscard]] inline
-    constexpr size_type size() const{
+    constexpr size_type size() const noexcept{
         return _base.size();
     }
 
     [[nodiscard]] inline
-    constexpr const_iterator begin() const{
+    constexpr const_iterator begin() const noexcept{
         return _base.begin();
     }
 
     [[nodiscard]] inline
-    constexpr const_iterator end() const{
+    constexpr const_iterator end() const noexcept{
         return _base.end();
     }
 
     inline
-    constexpr void clear() {
+    constexpr void clear() noexcept{
         this->_base.clear();
     }
 
     [[nodiscard]] inline
-    constexpr base_type const& base() const{
+    constexpr base_type const& base() const noexcept{
         return this->_base;
     }
     
-protected:
+private:
     base_type _base;
 };
 
-}
-}
 }
 
 #endif

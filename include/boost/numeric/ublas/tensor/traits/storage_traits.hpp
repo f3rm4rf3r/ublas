@@ -11,11 +11,12 @@
 //
 
 
-#ifndef _BOOST_STORAGE_TRAITS_HPP_
-#define _BOOST_STORAGE_TRAITS_HPP_
+#ifndef BOOST_UBLAS_TRAITS_STORAGE_HPP
+#define BOOST_UBLAS_TRAITS_STORAGE_HPP
 
 #include <vector>
 #include <array>
+#include <boost/numeric/ublas/tensor/tags.hpp>
 
 namespace boost {
 namespace numeric {
@@ -47,6 +48,9 @@ struct storage_traits<std::vector<V,A>>
     using reverse_iterator        = typename array_type::reverse_iterator;
     using const_reverse_iterator  = typename array_type::const_reverse_iterator;
 
+    using container_tag = storage_seq_container_tag;
+    using resizable_tag = storage_resizable_container_tag;
+
     template<class U>
     using rebind = std::vector<U, typename std::allocator_traits<A>::template rebind_alloc<U>>;
 };
@@ -56,6 +60,8 @@ template <class V, std::size_t N>
 struct storage_traits<std::array<V,N>>
 {
     using array_type      = std::array<V,N>;
+
+    static constexpr std::size_t const size_ = N;
 
     using size_type       = typename array_type::size_type;
     using difference_type = typename array_type::difference_type;
@@ -73,8 +79,14 @@ struct storage_traits<std::array<V,N>>
     using reverse_iterator        = typename array_type::reverse_iterator;
     using const_reverse_iterator  = typename array_type::const_reverse_iterator;
 
+    using container_tag = storage_seq_container_tag;
+    using resizable_tag = storage_static_container_tag;
+
     template<class U>
     using rebind = std::array<U,N>;
+
+    template<std::size_t M>
+    using rebind_size = std::array<V,M>;
 };
 
 } // ublas
@@ -82,4 +94,4 @@ struct storage_traits<std::array<V,N>>
 } // boost
 
 
-#endif // _BOOST_STORAGE_TRAITS_HPP_
+#endif // BOOST_UBLAS_TRAITS_STORAGE_HPP
